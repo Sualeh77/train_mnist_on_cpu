@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "train-mnist-on-cpu"
+version = "0.1.0"
+description = "Train MNIST on CPU, end to end process including docker & aws vm. ToDO: After training later we will deploy the model on aws vm."
+authors = ["Sualeh Qureshi <sualeh.qureshi@tomtom.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pandas = "^2.2.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
