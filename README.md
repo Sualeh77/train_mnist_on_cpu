@@ -1,4 +1,4 @@
-onda on# Assignment 1 EMLO end to end process
+# Assignment 1 EMLO end to end process
 
 - Starting the coding part on local machine 
     . Starting with env setup using conda and poetry.
