@@ -1,1 +1,8 @@
 datasets/
+
+models/
+
+plots/
+
+__pycache__/
+*.py[cod]
