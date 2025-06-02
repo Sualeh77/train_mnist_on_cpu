@@ -34,8 +34,10 @@ conda activate emlo_ass2
 ```bash
 python -m pip install poetry
 ```
-Dont forget to use -m while installing libraries to do env level installations as your pip might still be pointing to system level lib. You can verify it using ```bash
-which python & which pip
+Dont forget to use -m while installing libraries to do env level installations as your pip might still be pointing to system level lib. You can verify it using comands:
+```bash
+which python
+which pip
 ```
 
 3. Install project dependencies:

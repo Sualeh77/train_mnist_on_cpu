@@ -35,13 +35,13 @@ COPY . .
 RUN poetry install --only main
 
 # Install PyTorch (CPU version)
-RUN pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
-# Create necessary directories
-RUN mkdir -p models plots datasets
+# Make entrypoint script executable (moved after COPY)
+RUN chmod +x /app/entrypoint.sh
 
 # Set Python path
 ENV PYTHONPATH=/app
 
 # Default command
-CMD ["poetry", "run", "python", "train_mnist_on_cpu/main.py"]
+CMD ["/app/entrypoint.sh"]

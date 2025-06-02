@@ -1,6 +1,8 @@
 from mnist_dataset import get_dataloader
 from models import get_model
-from config import DEVICE, SAVE_PATH, LOAD_PATH, MODEL_TYPE, OPTIMIZER_TYPE, SCHEDULER_TYPE, LOSS_TYPE, BATCH_SIZE, NUM_EPOCHS, LEARNING_RATE
+from config import (DEVICE, SAVE_PATH, LOAD_PATH, MODEL_TYPE, OPTIMIZER_TYPE, 
+                   SCHEDULER_TYPE, LOSS_TYPE, BATCH_SIZE, NUM_EPOCHS, 
+                   LEARNING_RATE, RESUME_TRAINING, CHECKPOINT_PATH)
 from train import ModelTrainer
 from visualize import plot_batch_metrics, plot_epoch_metrics
 from utils import get_loss_fn, get_optimizer, get_scheduler
@@ -18,6 +20,8 @@ class MNISTTrainer:
         self.num_epochs = NUM_EPOCHS
         self.learning_rate = LEARNING_RATE
         self.save_path = SAVE_PATH
+        self.resume_training = RESUME_TRAINING
+        self.checkpoint_path = CHECKPOINT_PATH
 
         self.batch_train_losses = []
         self.batch_val_losses = []
@@ -55,8 +59,18 @@ class MNISTTrainer:
         print(f"Learning rate: {self.learning_rate}")
         print(f"Batch size: {self.batch_size}")
         print(f"Number of epochs: {self.num_epochs}")
+        if self.resume_training and self.checkpoint_path:
+            print(f"Resuming training from checkpoint: {self.checkpoint_path}")
         
-        metrics = self.trainer.train(self.num_epochs, self.train_loader, self.val_loader)
+        metrics = self.trainer.train(
+            self.num_epochs, 
+            self.train_loader, 
+            self.val_loader,
+            self.model_type,
+            self.optimizer_type,
+            self.scheduler_type,
+            self.loss_type
+        )
 
         self.batch_train_losses = metrics[0]
         self.batch_val_losses = metrics[1]
@@ -66,12 +80,15 @@ class MNISTTrainer:
         self.epoch_val_losses = metrics[5]
         self.epoch_train_accuracies = metrics[6]
         self.epoch_val_accuracies = metrics[7]
-        print(self.epoch_train_accuracies)
     
     def save_model(self):
         """Save the trained model"""
-        torch.save(self.model.state_dict(), self.save_path + f"{self.model_type}_{self.optimizer_type}_{'' if not self.scheduler_type else self.scheduler_type}_{self.loss_type}.pth")
-        print(f"\nModel saved to {self.save_path}")
+        model_path = os.path.join(
+            self.save_path, 
+            f"{self.model_type}_{self.optimizer_type}_{'' if not self.scheduler_type else self.scheduler_type}_{self.loss_type}.pth"
+        )
+        torch.save(self.model.state_dict(), model_path)
+        print(f"\nModel saved to {model_path}")
     
     def save_plots(self):
         """Generate and save training plots"""

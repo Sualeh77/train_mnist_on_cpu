@@ -26,5 +26,11 @@ SAVE_PATH = "../models/"
 # Load path
 LOAD_PATH = None
 
+# Checkpoint settings
+CHECKPOINT_DIR = "../models/checkpoints/"
+CHECKPOINT_INTERVAL = 2  # Save checkpoint every N epochs
+RESUME_TRAINING = False  # Whether to resume from checkpoint
+CHECKPOINT_PATH = None   # Path to checkpoint file to resume from
+
 # Data
 DATA_DIR = "../datasets/mnist"
