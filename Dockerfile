@@ -43,5 +43,5 @@ RUN chmod +x /app/entrypoint.sh
 # Set Python path
 ENV PYTHONPATH=/app
 
-# Default command
-CMD ["/app/entrypoint.sh"]
+# Set entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]
