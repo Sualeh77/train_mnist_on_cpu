@@ -10,6 +10,7 @@ train_mnist_on_cpu/
 ├── README.md              # Project documentation
 ├── Dockerfile             # Docker configuration
 ├── entrypoint.sh          # Docker entrypoint script
+├── format_code.sh         # Code formatting script
 ├── .dockerignore         # Docker ignore file
 ├── train_mnist_on_cpu/    # Main package directory
 │   ├── __init__.py
@@ -241,3 +242,29 @@ plots/
    - Model quantization
    - ONNX export
    - Inference pipeline
+
+## Development Setup
+
+### Code Formatting
+
+This project uses Black for code formatting. To set up and use Black:
+
+1. Install development dependencies:
+```bash
+poetry install --with dev
+```
+
+2. Format all Python files:
+```bash
+./format_code.sh
+```
+
+Or format specific files:
+```bash
+poetry run black path/to/file.py
+```
+
+Black configuration (in `pyproject.toml`):
+- Line length: 88 characters
+- Target Python version: 3.10
+- Excludes: git, build, and virtual environment directories
