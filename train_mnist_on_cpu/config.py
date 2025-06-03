@@ -18,7 +18,8 @@ LOSS_TYPE = "cross_entropy"
 
 # Device
 import torch
-DEVICE = "cpu" #"cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+
+DEVICE = "cpu"  # "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 
 # Save paths
 SAVE_PATH = "../models/"

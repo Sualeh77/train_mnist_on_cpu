@@ -13,6 +13,7 @@ test_data = datasets.MNIST(DATA_DIR, train=False, download=True)
 test_images = test_data.data
 test_labels = test_data.targets
 
+
 class MNISTDatasetFCN(Dataset):
     def __init__(self, images, labels):
         images = images.float()
@@ -22,11 +23,12 @@ class MNISTDatasetFCN(Dataset):
 
     def __len__(self):
         return len(self.x)
-    
+
     def __getitem__(self, idx):
         x, y = self.x[idx], self.y[idx]
         return x.to(DEVICE), y.to(DEVICE)
-    
+
+
 def get_dataloader(train_test="train", batch_size=32):
     if train_test == "train":
         dataset = MNISTDatasetFCN(train_images, train_labels)

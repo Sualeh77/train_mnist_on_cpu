@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class MNISTModelFCN(nn.Module):
     def __init__(self):
         super(MNISTModelFCN, self).__init__()
@@ -17,7 +18,8 @@ class MNISTModelFCN(nn.Module):
         x = torch.relu(self.fc4(x))
         x = self.fc5(x)
         return x
-    
+
+
 def get_model(model_type="FCN"):
     if model_type == "FCN":
         return MNISTModelFCN()
