@@ -1,6 +1,6 @@
 # MNIST Training Pipeline
 
-A PyTorch-based training pipeline for the MNIST dataset, featuring a modular architecture and comprehensive training visualization.
+A PyTorch-based training pipeline for the MNIST dataset, featuring a modular architecture, comprehensive training visualization, and Docker support for easy deployment.
 
 ## Project Structure
 
@@ -8,6 +8,9 @@ A PyTorch-based training pipeline for the MNIST dataset, featuring a modular arc
 train_mnist_on_cpu/
 ├── pyproject.toml          # Poetry dependency management
 ├── README.md              # Project documentation
+├── Dockerfile             # Docker configuration
+├── entrypoint.sh          # Docker entrypoint script
+├── .dockerignore         # Docker ignore file
 ├── train_mnist_on_cpu/    # Main package directory
 │   ├── __init__.py
 │   ├── config.py          # Configuration and hyperparameters
@@ -17,12 +20,16 @@ train_mnist_on_cpu/
 │   ├── train.py          # Training loop implementation
 │   ├── utils.py          # Utility functions
 │   └── visualize.py      # Training visualization utilities
-├── models/               # Saved model checkpoints
+├── models/               # Saved model checkpoints and best models
+│   ├── checkpoints/     # Training checkpoints
+│   └── best_model/      # Best model based on validation accuracy
 ├── plots/               # Training visualization plots
 └── datasets/           # MNIST dataset storage
 ```
 
 ## Setup Instructions
+
+### Option 1: Local Setup
 
 1. Create and activate conda environment:
 ```bash
@@ -34,7 +41,7 @@ conda activate emlo_ass2
 ```bash
 python -m pip install poetry
 ```
-Dont forget to use -m while installing libraries to do env level installations as your pip might still be pointing to system level lib. You can verify it using comands:
+Note: Always use `python -m pip` to ensure environment-level installations. Verify your Python and pip paths:
 ```bash
 which python
 which pip
@@ -42,132 +49,195 @@ which pip
 
 3. Install project dependencies:
 ```bash
+# Install project dependencies using Poetry
 poetry install
-python -m pip install torch torchvision torchaudio
+
+# Install PyTorch (CPU version)
+python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 ```
 
-## Codebase Documentation
+### Option 2: Docker Setup
 
-### 1. Configuration (`config.py`)
-Central configuration file containing all hyperparameters and settings:
-- Training hyperparameters (batch size, epochs, learning rate)
-- Model configuration (model type, optimizer, scheduler, loss function)
-- Device settings (CPU/CUDA/MPS)
-- File paths for data, model checkpoints, and plots
+1. Build the Docker image:
+```bash
+# From the project root directory
+docker build -t mnist-trainer .
+```
 
-### 2. Main Training Orchestration (`main.py`)
-Contains the `MNISTTrainer` class that orchestrates the entire training pipeline:
+2. Create required directories (if they don't exist):
+```bash
+mkdir -p datasets models/checkpoints models/best_model plots
+```
 
-#### `MNISTTrainer` Class
-- **Purpose**: Manages the complete training workflow
-- **Key Methods**:
-  - `__init__`: Initializes training components and directories
-  - `_init_components`: Sets up model, loss function, optimizer, and data loaders
-  - `train`: Executes the training loop
-  - `save_model`: Saves model checkpoints
-  - `save_plots`: Generates and saves training visualizations
-  - `run`: Orchestrates the complete training pipeline
+## Running the Training
 
-### 3. Model Definition (`models.py`)
-Contains the neural network architecture:
+### Option 1: Local Training
 
-#### `MNISTModelFCN` Class
-- **Purpose**: Implements a fully connected neural network for MNIST
-- **Architecture**:
-  - Input: 784 (28x28 flattened images)
-  - Hidden layers: 128 → 256 → 512 → 128
-  - Output: 10 (digit classes)
-  - Activation: ReLU
-- **Functions**:
-  - `get_model`: Factory function to create model instances
+1. Configure training parameters in `config.py`:
+   - Adjust hyperparameters (batch size, epochs, learning rate)
+   - Select model type, optimizer, and scheduler
+   - Modify paths if needed
 
-### 4. Dataset Management (`mnist_dataset.py`)
-Handles data loading and preprocessing:
-
-#### `MNISTDatasetFCN` Class
-- **Purpose**: Custom Dataset class for MNIST
-- **Features**:
-  - Image normalization
-  - Flattening of 28x28 images
-  - Device placement (CPU/CUDA)
-- **Functions**:
-  - `get_dataloader`: Creates DataLoader instances for training/validation
-
-### 5. Training Implementation (`train.py`)
-Implements the training loop:
-
-#### `ModelTrainer` Class
-- **Purpose**: Manages the training and validation process
-- **Key Methods**:
-  - `train_batch`: Handles single batch training
-  - `validate_batch`: Handles single batch validation
-  - `train`: Implements the complete training loop with metrics tracking
-
-### 6. Utility Functions (`utils.py`)
-Provides helper functions for training setup:
-- `get_loss_fn`: Creates loss function instances
-- `get_optimizer`: Creates optimizer instances
-- `get_scheduler`: Creates learning rate scheduler instances
-
-### 7. Visualization (`visualize.py`)
-Handles training metrics visualization:
-
-#### Functions
-- `plot_batch_metrics`: Creates dual-axis plots for batch-wise metrics
-- `plot_epoch_metrics`: Creates dual-axis plots for epoch-wise metrics
-- Features:
-  - Dual y-axes for loss and accuracy
-  - Color-coded training and validation metrics
-  - Grid lines and legends
-  - High-resolution output
-
-## Usage
-
-1. Configure training parameters in `config.py`
-
-2. Run training:
+2. Start training from scratch:
 ```bash
 python -m train_mnist_on_cpu.main
 ```
 
-3. Monitor training:
-- Progress bars show batch-wise training
-- Console output shows epoch-wise metrics
-- Plots are saved in the `plots/` directory
-- Model checkpoints are saved in the `models/` directory
+3. Resume training from a checkpoint:
+```bash
+python -m train_mnist_on_cpu.main --resume --checkpoint models/checkpoints/checkpoint_FCN_SGD_no_scheduler_cross_entropy_epoch_X.pt
+```
 
-## Output
+### Option 2: Docker Training
 
-The training pipeline generates:
-1. Model checkpoints in `models/` directory
-2. Training visualizations in `plots/` directory:
-   - `batch_metrics.png`: Batch-wise training metrics
-   - `epoch_metrics.png`: Epoch-wise training metrics
+1. Training from scratch:
+```bash
+docker run -ti --rm \
+    -v $(pwd)/datasets:/app/datasets \
+    -v $(pwd)/models:/app/models \
+    -v $(pwd)/plots:/app/plots \
+    mnist-trainer
+```
+
+2. Resume training from a checkpoint:
+```bash
+docker run -ti --rm \
+    -v $(pwd)/datasets:/app/datasets \
+    -v $(pwd)/models:/app/models \
+    -v $(pwd)/plots:/app/plots \
+    mnist-trainer --resume --checkpoint /app/models/checkpoints/checkpoint_FCN_SGD_no_scheduler_cross_entropy_epoch_X.pt
+```
+
+## Training Features
+
+### 1. Model Checkpointing
+- Automatic checkpoint saving every N epochs (configurable in `config.py`)
+- Checkpoints include:
+  - Model state
+  - Optimizer state
+  - Scheduler state
+  - Training metrics
+  - Best model information
+
+### 2. Best Model Tracking
+- Saves the model with best validation accuracy
+- Automatically deletes previous best model
+- Best model filename includes:
+  - Model type
+  - Optimizer type
+  - Scheduler type
+  - Loss type
+  - Epoch number
+  - Validation accuracy
+
+### 3. Training Visualization
+- Real-time progress bars for batch-wise training
+- Console output for epoch-wise metrics
+- Dual-axis plots for:
+  - Batch-wise metrics (`plots/batch_metrics.png`)
+  - Epoch-wise metrics (`plots/epoch_metrics.png`)
+- Features:
+  - Separate axes for loss and accuracy
+  - Color-coded training and validation metrics
+  - Grid lines and legends
+  - High-resolution output
+
+## Codebase Documentation
+
+### 1. Configuration (`config.py`)
+Central configuration file containing:
+- Training hyperparameters:
+  - `BATCH_SIZE`: Number of samples per batch
+  - `NUM_EPOCHS`: Total training epochs
+  - `LEARNING_RATE`: Initial learning rate
+- Model settings:
+  - `MODEL_TYPE`: Neural network architecture
+  - `OPTIMIZER_TYPE`: Optimization algorithm
+  - `SCHEDULER_TYPE`: Learning rate scheduler
+  - `LOSS_TYPE`: Loss function
+- Path configurations:
+  - `CHECKPOINT_DIR`: Checkpoint storage
+  - `BEST_MODEL_DIR`: Best model storage
+  - `CHECKPOINT_INTERVAL`: Epochs between checkpoints
+
+### 2. Main Training Orchestration (`main.py`)
+`MNISTTrainer` class features:
+- Command-line argument parsing for training control
+- Training component initialization
+- Complete training pipeline management
+- Plot generation and saving
+
+### 3. Training Implementation (`train.py`)
+`ModelTrainer` class capabilities:
+- Training and validation loops
+- Checkpoint management
+- Best model tracking
+- Metrics collection
+- Training resumption
+
+### 4. Model Architecture (`models.py`)
+- Fully Connected Network (FCN) for MNIST
+- Architecture:
+  - Input: 784 (28x28 flattened images)
+  - Hidden layers: 128 → 256 → 512 → 128
+  - Output: 10 (digit classes)
+  - Activation: ReLU
+
+### 5. Data Management (`mnist_dataset.py`)
+- MNIST dataset handling
+- Data normalization
+- DataLoader creation
+- Device placement
+
+## Output Structure
+
+### Models Directory
+```
+models/
+├── checkpoints/
+│   └── checkpoint_[model]_[optimizer]_[scheduler]_[loss]_epoch_[N].pt
+└── best_model/
+    └── best_model_[model]_[optimizer]_[scheduler]_[loss]_epoch_[N]_val_acc_[X].pt
+```
+
+### Plots Directory
+```
+plots/
+├── batch_metrics.png  # Batch-wise training visualization
+└── epoch_metrics.png  # Epoch-wise training visualization
+```
 
 ## Dependencies
 
 - Python 3.10+
-- PyTorch
+- PyTorch (CPU version)
 - torchvision
 - matplotlib
 - tqdm
 - pandas
 - torch-summary
+- Poetry (for dependency management)
 
 ## Future Improvements
 
-1. Add support for:
-   - More model architectures
-   - Additional optimizers and schedulers
+1. Model Enhancements:
+   - Additional architectures (CNN, RNN)
+   - More optimizers and schedulers
    - Early stopping
-   - Model checkpointing
-   - Learning rate scheduling
-   - Custom metrics tracking
-   - Training resume capability
+   - Learning rate finder
+   - Custom metrics
 
-2. Implement:
-   - Docker containerization
-   - AWS deployment
-   - Model inference pipeline
-   - Unit tests
+2. Infrastructure:
+   - Multi-GPU support
+   - Distributed training
+   - Model serving
    - CI/CD pipeline
+   - Unit tests
+   - AWS deployment
+
+3. Features:
+   - Experiment tracking
+   - Hyperparameter tuning
+   - Model quantization
+   - ONNX export
+   - Inference pipeline
