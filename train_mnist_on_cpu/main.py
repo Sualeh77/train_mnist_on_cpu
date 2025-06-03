@@ -2,15 +2,24 @@ from mnist_dataset import get_dataloader
 from models import get_model
 from config import (DEVICE, SAVE_PATH, LOAD_PATH, MODEL_TYPE, OPTIMIZER_TYPE, 
                    SCHEDULER_TYPE, LOSS_TYPE, BATCH_SIZE, NUM_EPOCHS, 
-                   LEARNING_RATE, RESUME_TRAINING, CHECKPOINT_PATH)
+                   LEARNING_RATE, CHECKPOINT_DIR, BEST_MODEL_DIR)
 from train import ModelTrainer
 from visualize import plot_batch_metrics, plot_epoch_metrics
 from utils import get_loss_fn, get_optimizer, get_scheduler
 import torch
 import os
+import argparse
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Train MNIST model')
+    parser.add_argument('--resume', action='store_true',
+                      help='Resume training from checkpoint')
+    parser.add_argument('--checkpoint', type=str, default=None,
+                      help='Path to checkpoint file to resume from')
+    return parser.parse_args()
 
 class MNISTTrainer:
-    def __init__(self):
+    def __init__(self, resume_training=False, checkpoint_path=None):
         self.device = DEVICE
         self.model_type = MODEL_TYPE
         self.optimizer_type = OPTIMIZER_TYPE
@@ -19,9 +28,8 @@ class MNISTTrainer:
         self.batch_size = BATCH_SIZE
         self.num_epochs = NUM_EPOCHS
         self.learning_rate = LEARNING_RATE
-        self.save_path = SAVE_PATH
-        self.resume_training = RESUME_TRAINING
-        self.checkpoint_path = CHECKPOINT_PATH
+        self.resume_training = resume_training
+        self.checkpoint_path = checkpoint_path
 
         self.batch_train_losses = []
         self.batch_val_losses = []
@@ -32,8 +40,7 @@ class MNISTTrainer:
         self.epoch_train_accuracies = []
         self.epoch_val_accuracies = []
         
-        # Create save directory
-        os.makedirs(os.path.dirname(self.save_path), exist_ok=True)
+        # Create plots directory
         os.makedirs("../plots/", exist_ok=True)
         
         # Initialize components
@@ -63,13 +70,15 @@ class MNISTTrainer:
             print(f"Resuming training from checkpoint: {self.checkpoint_path}")
         
         metrics = self.trainer.train(
-            self.num_epochs, 
-            self.train_loader, 
-            self.val_loader,
-            self.model_type,
-            self.optimizer_type,
-            self.scheduler_type,
-            self.loss_type
+            num_epochs=self.num_epochs, 
+            train_loader=self.train_loader, 
+            val_loader=self.val_loader,
+            model_name=self.model_type,
+            optimizer_name=self.optimizer_type,
+            scheduler_name=self.scheduler_type,
+            loss_name=self.loss_type,
+            resume_training=self.resume_training,
+            checkpoint_path=self.checkpoint_path
         )
 
         self.batch_train_losses = metrics[0]
@@ -80,15 +89,6 @@ class MNISTTrainer:
         self.epoch_val_losses = metrics[5]
         self.epoch_train_accuracies = metrics[6]
         self.epoch_val_accuracies = metrics[7]
-    
-    def save_model(self):
-        """Save the trained model"""
-        model_path = os.path.join(
-            self.save_path, 
-            f"{self.model_type}_{self.optimizer_type}_{'' if not self.scheduler_type else self.scheduler_type}_{self.loss_type}.pth"
-        )
-        torch.save(self.model.state_dict(), model_path)
-        print(f"\nModel saved to {model_path}")
     
     def save_plots(self):
         """Generate and save training plots"""
@@ -112,11 +112,19 @@ class MNISTTrainer:
     def run(self):
         """Run the complete training pipeline"""
         self.train()
-        self.save_model()
         self.save_plots()
 
 def main():
-    trainer = MNISTTrainer()
+    args = parse_args()
+    
+    # Validate checkpoint path if resume is enabled
+    if args.resume and not args.checkpoint:
+        raise ValueError("Checkpoint path must be provided when resuming training")
+    
+    trainer = MNISTTrainer(
+        resume_training=args.resume,
+        checkpoint_path=args.checkpoint
+    )
     trainer.run()
 
 if __name__ == "__main__":
